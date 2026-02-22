@@ -11,13 +11,13 @@ port = 42617
 host = "[::]"
 allow_public_bind = true
 
-# ── Top-level agent (orchestrator) ───────────────────────────────────────────
-# The orchestrator receives tasks and delegates to work teams via the delegate
-# tool. It does not execute work directly. Identity is defined in
-# workspace/AGENTS.md; bootstrap steps in workspace/BOOTSTRAP.md.
+# ── Top-level agent ──────────────────────────────────────────────────────────
+# Fully capable by default. Prefers delegating to work teams when a matching
+# team exists; executes directly as fallback. Identity and delegation
+# preference defined in workspace/AGENTS.md; bootstrap in workspace/BOOTSTRAP.md.
 [agent]
 tool_dispatcher = "xml"       # llama3.2 requires XML tool-call format
-max_tool_iterations = 5       # orchestrator routes only; keep ceiling low
+max_tool_iterations = 10      # default ceiling; work teams carry their own limits
 max_history_messages = 50
 
 # ── Work teams ────────────────────────────────────────────────────────────────
