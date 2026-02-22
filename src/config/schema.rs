@@ -206,6 +206,10 @@ pub struct Config {
     /// Voice transcription configuration (Whisper API via Groq).
     #[serde(default)]
     pub transcription: TranscriptionConfig,
+
+    /// Inbox ingestion pipeline configuration (`[inbox]`).
+    #[serde(default)]
+    pub inbox: InboxConfig,
 }
 
 // ── Delegate Agents ──────────────────────────────────────────────
@@ -330,6 +334,59 @@ fn default_transcription_model() -> String {
 
 fn default_transcription_max_duration_secs() -> u64 {
     120
+}
+
+/// Inbox ingestion pipeline configuration (`[inbox]` section).
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct InboxConfig {
+    /// Root inbox directory relative to workspace (default: `"inbox"`).
+    #[serde(default = "default_inbox_root")]
+    pub root: String,
+
+    /// Poll interval in minutes for scheduled inbox scans (default: `10`).
+    #[serde(default = "default_inbox_poll_interval_minutes")]
+    pub poll_interval_minutes: u64,
+
+    /// Source-type subdirectories to scan, in priority order.
+    /// Each entry maps to a subdirectory under `root` (default: `["emails", "transcripts", "research", "chats"]`).
+    #[serde(default = "default_inbox_source_priority")]
+    pub source_priority: Vec<String>,
+
+    /// Maximum files to process per poll cycle. Prevents runaway on large backlogs (default: `5`).
+    #[serde(default = "default_inbox_max_files_per_cycle")]
+    pub max_files_per_cycle: usize,
+}
+
+fn default_inbox_root() -> String {
+    "inbox".into()
+}
+
+fn default_inbox_poll_interval_minutes() -> u64 {
+    10
+}
+
+fn default_inbox_source_priority() -> Vec<String> {
+    vec![
+        "emails".into(),
+        "transcripts".into(),
+        "research".into(),
+        "chats".into(),
+    ]
+}
+
+fn default_inbox_max_files_per_cycle() -> usize {
+    5
+}
+
+impl Default for InboxConfig {
+    fn default() -> Self {
+        Self {
+            root: default_inbox_root(),
+            poll_interval_minutes: default_inbox_poll_interval_minutes(),
+            source_priority: default_inbox_source_priority(),
+            max_files_per_cycle: default_inbox_max_files_per_cycle(),
+        }
+    }
 }
 
 /// Voice transcription configuration (Whisper API via Groq).
@@ -3419,6 +3476,7 @@ impl Default for Config {
             hardware: HardwareConfig::default(),
             query_classification: QueryClassificationConfig::default(),
             transcription: TranscriptionConfig::default(),
+            inbox: InboxConfig::default(),
         }
     }
 }
@@ -4689,6 +4747,7 @@ default_temperature = 0.7
             hooks: HooksConfig::default(),
             hardware: HardwareConfig::default(),
             transcription: TranscriptionConfig::default(),
+            inbox: InboxConfig::default(),
         };
 
         let toml_str = toml::to_string_pretty(&config).unwrap();
@@ -4863,6 +4922,7 @@ tool_dispatcher = "xml"
             hooks: HooksConfig::default(),
             hardware: HardwareConfig::default(),
             transcription: TranscriptionConfig::default(),
+            inbox: InboxConfig::default(),
         };
 
         config.save().await.unwrap();
