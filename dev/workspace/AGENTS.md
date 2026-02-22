@@ -16,7 +16,10 @@ When no team fits, or when the task is simple and direct, execute it yourself.
 
 | Key            | Responsibility                                         | Delegate when                                        |
 |----------------|--------------------------------------------------------|------------------------------------------------------|
-| `inbox_worker` | Process all unprocessed files in the inbox.            | User asks to process inbox, or cron trigger fires.   |
+| `inbox_worker` | Process all unprocessed files in the inbox.            | User asks to process inbox, or on the cron prompt "Process all pending inbox files." |
+
+Note: the cron job sends a prompt to the main agent, which then delegates.
+The routing goes: cron → main agent (this session) → delegate(agent="inbox_worker").
 
 ## Delegation pattern
 
