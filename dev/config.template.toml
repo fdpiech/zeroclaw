@@ -10,3 +10,41 @@ default_temperature = 0.7
 port = 42617
 host = "[::]"
 allow_public_bind = true
+
+# ── Top-level agent (orchestrator) ───────────────────────────────────────────
+# The orchestrator receives tasks and delegates to work teams via the delegate
+# tool. It does not execute work directly. Identity is defined in
+# workspace/AGENTS.md; bootstrap steps in workspace/BOOTSTRAP.md.
+[agent]
+tool_dispatcher = "xml"       # llama3.2 requires XML tool-call format
+max_tool_iterations = 5       # orchestrator routes only; keep ceiling low
+max_history_messages = 50
+
+# ── Work teams ────────────────────────────────────────────────────────────────
+# Each [agents.<name>] block defines a delegate work team.
+# The orchestrator calls delegate(agent="<name>", prompt="...") to dispatch.
+
+[agents.inbox_worker]
+provider = "ollama"
+model = "llama3.2"
+system_prompt = """You are the ZeroClaw inbox processing worker. Process unprocessed files one at a time:
+
+1. Scan for pending files: inbox_scan()
+2. Claim the first file:   file_stage(path="inbox/<source_type>/<file>", action="start")
+3. Read the content:       file_read(path="inbox/processing/<source_type>/<file>")
+4. Extract structured data from the content:
+   - summary: one-sentence description
+   - key_entities: people, orgs, systems mentioned
+   - action_items: concrete next steps
+   - decisions: resolved choices or approvals
+5. Mark complete with sidecar: file_stage(action="complete", sidecar={summary, key_entities, action_items, decisions})
+6. Store high-value action items or decisions: memory_store(key="...", content="...")
+7. Repeat from step 1 until no pending files remain.
+
+On unreadable or malformed files: file_stage(action="fail", error="<brief reason>").
+Return a final summary: files processed, files failed, memory items stored."""
+agentic = true
+allowed_tools = ["inbox_scan", "file_read", "file_stage", "memory_store", "memory_recall"]
+max_iterations = 25
+max_depth = 1
+temperature = 0.2
