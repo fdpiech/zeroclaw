@@ -41,6 +41,10 @@ services:
       - ../playground:/zeroclaw-data/workspace
     ports:
       - "127.0.0.1:42617:42617"
+    # Required on Linux so the container can reach the host (e.g. Ollama at host.docker.internal).
+    # Docker Desktop on Mac/Windows sets host.docker.internal automatically; this is a no-op there.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - dev-net
 
