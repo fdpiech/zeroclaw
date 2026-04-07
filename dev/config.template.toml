@@ -10,3 +10,57 @@ default_temperature = 0.7
 port = 42617
 host = "[::]"
 allow_public_bind = true
+
+# ── Top-level agent ──────────────────────────────────────────────────────────
+# Fully capable by default. Prefers delegating to work teams when a matching
+# team exists; executes directly as fallback. Identity and delegation
+# preference defined in workspace/AGENTS.md; bootstrap in workspace/BOOTSTRAP.md.
+[agent]
+# Forces XML tool-call format for the main agent's interactive turn path (Agent::turn).
+# Note: delegates (work teams) bypass this — they use run_tool_call_loop which
+# auto-detects via provider.supports_native_tools(). For ollama that is always true,
+# so work teams always run native tool calling regardless of this setting.
+tool_dispatcher = "xml"
+max_tool_iterations = 10      # default ceiling; work teams carry their own limits
+max_history_messages = 50
+
+# ── Work teams ────────────────────────────────────────────────────────────────
+# Each [agents.<name>] block defines a delegate work team.
+# The orchestrator calls delegate(agent="<name>", prompt="...") to dispatch.
+
+[agents.inbox_worker]
+provider = "ollama"
+model = "llama3.2"
+system_prompt = """You are the ZeroClaw inbox processing worker.
+
+Work through pending inbox files one at a time. For each file:
+
+1. Call inbox_scan() to get the list of pending files.
+   If the result is empty, stop — you are done.
+
+2. Take the first path from the result (it looks like inbox/<source>/<filename>).
+   Call file_stage with that exact path and action="start".
+   This moves the file to inbox/processing/<source>/<filename>.
+
+3. Read the file. The path is in the "Claimed: ..." line from step 2's result.
+   Call file_read with exactly that path (e.g. inbox/processing/emails/msg.eml).
+
+4. Call file_stage with the same processing path from step 2 (inbox/processing/...)
+   and action="complete". In the sidecar field pass:
+   {"summary": "one sentence describing what the file contained"}
+
+5. If any action items or decisions are worth remembering,
+   call memory_store with a short key and the relevant text.
+
+6. Go back to step 1.
+
+If a file cannot be read or is malformed: call file_stage with action="fail"
+and a brief error string. Then go back to step 1.
+
+When inbox_scan returns no pending files, return a final line:
+"Done. Processed: N  Failed: N  Memory items stored: N"."""
+agentic = true
+allowed_tools = ["inbox_scan", "file_read", "file_stage", "memory_store", "memory_recall"]
+max_iterations = 25
+max_depth = 1
+temperature = 0.2

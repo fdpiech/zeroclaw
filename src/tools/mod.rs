@@ -29,6 +29,7 @@ pub mod cron_update;
 pub mod delegate;
 pub mod file_edit;
 pub mod file_read;
+pub mod file_stage;
 pub mod file_write;
 pub mod git_operations;
 pub mod glob_search;
@@ -37,6 +38,7 @@ pub mod hardware_memory_map;
 pub mod hardware_memory_read;
 pub mod http_request;
 pub mod image_info;
+pub mod inbox_scan;
 pub mod memory_forget;
 pub mod memory_recall;
 pub mod memory_store;
@@ -64,6 +66,7 @@ pub use cron_update::CronUpdateTool;
 pub use delegate::DelegateTool;
 pub use file_edit::FileEditTool;
 pub use file_read::FileReadTool;
+pub use file_stage::FileStageTool;
 pub use file_write::FileWriteTool;
 pub use git_operations::GitOperationsTool;
 pub use glob_search::GlobSearchTool;
@@ -72,6 +75,7 @@ pub use hardware_memory_map::HardwareMemoryMapTool;
 pub use hardware_memory_read::HardwareMemoryReadTool;
 pub use http_request::HttpRequestTool;
 pub use image_info::ImageInfoTool;
+pub use inbox_scan::InboxScanTool;
 pub use memory_forget::MemoryForgetTool;
 pub use memory_recall::MemoryRecallTool;
 pub use memory_store::MemoryStoreTool;
@@ -205,6 +209,8 @@ pub fn all_tools_with_runtime(
         Arc::new(FileEditTool::new(security.clone())),
         Arc::new(GlobSearchTool::new(security.clone())),
         Arc::new(ContentSearchTool::new(security.clone())),
+        Arc::new(InboxScanTool::new(security.clone())),
+        Arc::new(FileStageTool::new(security.clone())),
         Arc::new(CronAddTool::new(config.clone(), security.clone())),
         Arc::new(CronListTool::new(config.clone())),
         Arc::new(CronRemoveTool::new(config.clone(), security.clone())),
